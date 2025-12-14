@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import Navbar from '../components/Navbar';
 import InitialSetup from '../components/InitialSetup';
+import FarmSelector from '../components/FarmSelector';
+import Statistics from '../components/Statistics';
+import HeatMap from '../components/HeatMap';
 import SearchBar from '../components/SearchBar';
 import ViewModeSelector from '../components/ViewModeSelector';
 import FarmGrid from '../components/FarmGrid';
@@ -10,7 +13,13 @@ import ConfigModal from '../components/ConfigModal';
 import PlantDetailModal from '../components/PlantDetailModal';
 
 export default function FarmManager() {
-  const [plants, setPlants] = useLocalStorage('avocadoPlants', []);
+  // Sistema de múltiples terrenos
+  const [farms, setFarms] = useLocalStorage('farms', []);
+  const [currentFarmId, setCurrentFarmId] = useLocalStorage('currentFarmId', null);
+  
+  const currentFarm = farms.find(f => f.id === currentFarmId);
+  const plants = currentFarm?.plants || [];
+  
   const [selectedPlant, setSelectedPlant] = useState(null);
   const [showPlantModal, setShowPlantModal] = useState(false);
   const [rows, setRows] = useState(10);
@@ -18,12 +27,50 @@ export default function FarmManager() {
   const [showConfig, setShowConfig] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Nuevos estados para búsqueda y filtros
+  // Estados de búsqueda y filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBy, setFilterBy] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' o 'list'
+  const [viewMode, setViewMode] = useState('grid');
 
+  // Crear nuevo terreno
+  const createFarm = (name) => {
+    const newFarm = {
+      id: Date.now().toString(),
+      name,
+      rows: 10,
+      cols: 40,
+      plants: [],
+      createdAt: new Date().toISOString()
+    };
+    setFarms([...farms, newFarm]);
+    setCurrentFarmId(newFarm.id);
+  };
+
+  // Seleccionar terreno
+  const selectFarm = (farm) => {
+    setCurrentFarmId(farm.id);
+    setRows(farm.rows);
+    setCols(farm.cols);
+  };
+
+  // Eliminar terreno
+  const deleteFarm = (farmId) => {
+    if (farms.length === 1) {
+      alert('No puedes eliminar el único terreno. Crea otro primero.');
+      return;
+    }
+    
+    if (window.confirm('¿Estás seguro de eliminar este terreno? Se perderán todos los datos.')) {
+      const newFarms = farms.filter(f => f.id !== farmId);
+      setFarms(newFarms);
+      if (currentFarmId === farmId) {
+        setCurrentFarmId(newFarms[0]?.id || null);
+      }
+    }
+  };
+
+  // Inicializar terreno
   const initializeFarm = () => {
     const newPlants = [];
     for (let i = 0; i < rows; i++) {
@@ -37,7 +84,26 @@ export default function FarmManager() {
         });
       }
     }
-    setPlants(newPlants);
+    
+    if (currentFarm) {
+      setFarms(farms.map(f => 
+        f.id === currentFarm.id 
+          ? { ...f, plants: newPlants, rows, cols }
+          : f
+      ));
+    } else {
+      const newFarm = {
+        id: Date.now().toString(),
+        name: 'Mi Terreno',
+        rows,
+        cols,
+        plants: newPlants,
+        createdAt: new Date().toISOString()
+      };
+      setFarms([...farms, newFarm]);
+      setCurrentFarmId(newFarm.id);
+    }
+    
     setShowConfig(false);
   };
 
@@ -45,6 +111,18 @@ export default function FarmManager() {
     setSelectedPlant(plant);
     setShowPlantModal(true);
     setMobileMenuOpen(false);
+  };
+
+  const handlePlantSave = (updatedPlant) => {
+    setFarms(farms.map(f => 
+      f.id === currentFarm.id
+        ? {
+            ...f,
+            plants: f.plants.map(p => p.id === updatedPlant.id ? updatedPlant : p)
+          }
+        : f
+    ));
+    setShowPlantModal(false);
   };
 
   return (
@@ -57,7 +135,20 @@ export default function FarmManager() {
       />
 
       <div className="max-w-7xl mx-auto p-3 sm:p-4">
-        {plants.length === 0 ? (
+        {/* Selector de terrenos */}
+        {farms.length > 0 && (
+          <div className="mb-4">
+            <FarmSelector
+              farms={farms}
+              currentFarm={currentFarm}
+              onSelectFarm={selectFarm}
+              onCreateFarm={createFarm}
+              onDeleteFarm={deleteFarm}
+            />
+          </div>
+        )}
+
+        {!currentFarm || plants.length === 0 ? (
           <InitialSetup 
             rows={rows} 
             cols={cols} 
@@ -67,6 +158,18 @@ export default function FarmManager() {
           />
         ) : (
           <>
+            {/* Estadísticas */}
+            <Statistics plants={plants} />
+            
+            {/* Mapa de calor */}
+            <HeatMap 
+              plants={plants} 
+              rows={currentFarm.rows} 
+              cols={currentFarm.cols}
+              onPlantClick={handlePlantClick}
+            />
+            
+            {/* Búsqueda */}
             <SearchBar
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
@@ -76,16 +179,18 @@ export default function FarmManager() {
               setShowFilters={setShowFilters}
             />
             
+            {/* Selector de vista */}
             <ViewModeSelector
               viewMode={viewMode}
               setViewMode={setViewMode}
             />
             
+            {/* Vista principal */}
             {viewMode === 'grid' ? (
               <FarmGrid 
                 plants={plants} 
-                rows={rows} 
-                cols={cols} 
+                rows={currentFarm.rows} 
+                cols={currentFarm.cols} 
                 onPlantClick={handlePlantClick}
                 searchTerm={searchTerm}
                 filterBy={filterBy}
@@ -102,6 +207,7 @@ export default function FarmManager() {
         )}
       </div>
 
+      {/* Modales */}
       {showConfig && (
         <ConfigModal
           rows={rows}
@@ -117,10 +223,7 @@ export default function FarmManager() {
         <PlantDetailModal
           plant={selectedPlant}
           onClose={() => setShowPlantModal(false)}
-          onSave={(updatedPlant) => {
-            setPlants(plants.map(p => p.id === updatedPlant.id ? updatedPlant : p));
-            setShowPlantModal(false);
-          }}
+          onSave={handlePlantSave}
         />
       )}
     </div>
