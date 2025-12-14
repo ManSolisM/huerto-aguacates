@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/huerto-aguacates/static/css/main.633a2345.css",
-    "main.js": "/huerto-aguacates/static/js/main.9d546d79.js",
+    "main.css": "/huerto-aguacates/static/css/main.23efc002.css",
+    "main.js": "/huerto-aguacates/static/js/main.17457dcb.js",
     "index.html": "/huerto-aguacates/index.html",
-    "main.633a2345.css.map": "/huerto-aguacates/static/css/main.633a2345.css.map",
-    "main.9d546d79.js.map": "/huerto-aguacates/static/js/main.9d546d79.js.map"
+    "main.23efc002.css.map": "/huerto-aguacates/static/css/main.23efc002.css.map",
+    "main.17457dcb.js.map": "/huerto-aguacates/static/js/main.17457dcb.js.map"
   },
   "entrypoints": [
-    "static/css/main.633a2345.css",
-    "static/js/main.9d546d79.js"
+    "static/css/main.23efc002.css",
+    "static/js/main.17457dcb.js"
   ]
 }
