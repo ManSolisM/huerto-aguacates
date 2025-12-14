@@ -28,11 +28,12 @@ export default function InitialSetup({
           <input
             type="number"
             min="1"
-            max="20"
+            max="50"
             value={rows}
             onChange={(e) => setRows(parseInt(e.target.value) || 1)}
             className="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
           />
+          <p className="text-xs text-gray-500 mt-1">Recomendado: 10-20 filas</p>
         </div>
 
         <div>
@@ -42,18 +43,24 @@ export default function InitialSetup({
           <input
             type="number"
             min="1"
-            max="20"
+            max="50"
             value={cols}
             onChange={(e) => setCols(parseInt(e.target.value) || 1)}
             className="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
           />
+          <p className="text-xs text-gray-500 mt-1">Recomendado: 20-40 columnas</p>
         </div>
 
         <div className="bg-green-50 p-3 sm:p-4 rounded-lg">
-          <p className="text-sm sm:text-base text-gray-700 text-center">
+          <p className="text-sm sm:text-base text-gray-700 text-center mb-1">
             Total de plantas:{' '}
             <span className="font-bold text-green-700 text-lg">{rows * cols}</span>
           </p>
+          {rows * cols > 500 && (
+            <p className="text-xs text-orange-600 text-center mt-1">
+              ⚠️ Terreno grande: se recomienda usar la vista de lista
+            </p>
+          )}
         </div>
 
         <button
